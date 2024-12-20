@@ -1,0 +1,1 @@
+<h3>Lyric of A New Day Has Come :</h3><p></p>

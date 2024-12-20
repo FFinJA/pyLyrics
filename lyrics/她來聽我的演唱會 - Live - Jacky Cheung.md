@@ -1,0 +1,11 @@
+<h3>Lyric of 她來聽我的演唱會 :</h3><p>﻿<br>[id:$00000000]
+<br>[ar:张学友]
+<br>[ti:她来听我的演唱会]
+<br>[by:]
+<br>[hash:1e283abe39495e99bc5efe4702792c17]
+<br>[al:]
+<br>[sign:]
+<br>[qq:]
+<br>[total:274181]
+<br>[offset:0]
+</p>

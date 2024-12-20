@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>PyScript && FastAPI Demo</title>
+    <link rel="stylesheet" href="https://pyscript.net/releases/2024.8.2/core.css">
+    <script type="module" src="https://pyscript.net/releases/2024.8.2/core.js"></script>
+    <style>
+        .column {
+            float: left;
+            width: 45%;
+        }
+        .row:after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+        #tracks, #lyrics {
+            flex: 1; /* 每个元件占据相同宽度 */
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        #tracks {
+            max-width: 400px; /* 限制左侧宽度 */
+        }
+        #lyrics {
+            max-width: 500px /* 限制右侧宽度 */
+        }
+    </style>
+</head>
+<body>
+    <h1>Tracks Data from FastAPI</h1>
+    <div id="row"></div>
+    <div class="column">
+        <div id="tracks">
+        <div id="saved"></div>
+        <div id="played"></div>
+        </div>
+    </div>
+    <div class="column">
+        <div id="lyrics">
+        <div id="lyric"></div>
+        <div id="lyric_highlight"></div>
+        </div>
+    </div>
+    <script type="py">
+        from pyscript import display, document
+        import js
+        import asyncio
+        import re
+        from urllib.parse import quote
+
+        lyric_str = ''
+        saved_element = document.getElementById('saved')
+        played_element = document.getElementById('played')
+        
+        lyric_element = document.getElementById('lyric')
+
+        async def fetch_saved_datas():
+            url = "http://localhost:8251/saved"
+            response_saved = await js.fetch(url)
+            if response_saved.ok:
+                js_data_saved = await response_saved.json()
+                data_saved = list(js_data_saved.to_py())
+                content_saved = f'<p>Saved Track List</p><ul>'
+                for item_saved in data_saved:
+                    track_html = item_saved["track_name"].replace('"', "&quot;")
+                    track_html_escape = track_html.replace("'", "\\'")
+                    content_saved += f'<li><a href="#" onclick="fetch_saved_lyric(\'{track_html_escape}\'); return false;">{item_saved["track_name"]} - {item_saved["artist_name"]}</a></li>'
+                content_saved += '</ul>'                
+                
+                saved_element.innerHTML = content_saved
+            else:
+                saved_element.innerHTML = f'<p>Error: {response_saved.status}</p>'
+        
+        async def fetch_played_datas():
+            url = "http://localhost:8251/played"
+            response_played = await js.fetch(url)
+            if response_played.ok:
+                js_data_played = await response_played.json()
+                data_played = list(js_data_played.to_py())
+                content_played = f'<p>Played Track List</p><ul>'
+                for item_played in data_played:
+                    track_html = item_played["track_name"].replace('"', "&quot;")
+                    track_html_escape = track_html.replace("'", "\\'")
+                    content_played += f'<li><a href="#" onclick="fetch_played_lyric(\'{track_html_escape}\'); return false;">{item_played["track_name"]} - {item_played["artist_name"]}</a></li>'
+                content_played += '</ul>'                
+                
+                played_element.innerHTML = content_played
+            else:
+                played_element.innerHTML = f'<p>Error: {response_played.status}</p>'
+
+        
+
+        async def fetch_saved_lyric(track_name):
+            encoded_track_name = quote(track_name, safe='')
+
+            lyric_element.innerHTML = f'<p>Message: Fetching the lyric...</p>'
+            url = f"http://localhost:8251/lyrics/saved/{encoded_track_name}"
+            response = await js.fetch(url)
+            if response.ok:
+                js_data = await response.json()
+                data = js_data.to_py()
+                global lyric_str
+                lyric_str = data["lyrics"]
+
+                lyric_element.innerHTML = f'<p>{data["lyrics"]}</p>'
+                asyncio.ensure_future(update_lyrics_and_progress())
+            else:
+                lyric_element.innerHTML = f'<p>Error: {response.status}</p>'
+
+        async def fetch_played_lyric(track_name):
+            encoded_track_name = quote(track_name, safe='')
+            
+            lyric_element.innerHTML = f'<p>Message: Fetching the lyric...</p>'
+            url = f"http://localhost:8251/lyrics/played/{encoded_track_name}"
+            response = await js.fetch(url)
+            if response.ok:
+                js_data = await response.json()
+                data = js_data.to_py()
+                global lyric_str
+                lyric_str = data["lyrics"]
+                
+                lyric_element.innerHTML = f'<p>{data["lyrics"]}</p>'
+                asyncio.ensure_future(update_lyrics_and_progress())
+            else:
+                lyric_element.innerHTML = f'<p>Error: {response.status}</p>'
+        
+            def parse_lyrics(lyric_str):
+                lyric_lines = []
+                for line in lyric_str.strip().split("\n"):
+                    match = re.match(r'\[(\d+):(\d+\.\d+)\] (.+)', line)
+                    if match:
+                        minutes, seconds, text = match.groups()
+                        time_in_seconds = int(minutes) * 60 + float(seconds)
+                        lyric_lines.append((time_in_seconds, text))
+                return lyric_lines
+    
+            # 更新歌词和进度条
+            async def update_lyrics_and_progress():
+                global lyric_str
+                parsed_lyrics = parse_lyrics(lyric_str)
+                total_duration = parsed_lyrics[-1][0]  # 歌曲总时长
+                start_time = asyncio.get_event_loop().time()
+    
+                for i, (timestamp, text) in enumerate(parsed_lyrics):
+                    # 等待当前歌词的时间点
+                    current_time = asyncio.get_event_loop().time() - start_time
+                    wait_time = timestamp - current_time
+                    if wait_time > 0:
+                        await asyncio.sleep(wait_time)
+    
+                    # 更新歌词高亮显示
+                    lyrics_div = Element("lyrics_highlight")
+                    lyrics_div.element.innerHTML = f'<span class="highlight">{text}</span>'
+    
+                    # 更新进度条
+                    progress = (timestamp / total_duration) * 100
+                    progress_bar = Element("progress-bar")
+                    progress_bar.element.value = progress
+    
+                # 最后设置进度条到 100%
+                progress_bar.element.value = 100
+        
+        
+        # 暴露 fetch_lyric 到全局作用域
+        js.fetch_saved_lyric = fetch_saved_lyric
+        js.fetch_played_lyric = fetch_played_lyric
+        await fetch_saved_datas()
+        await fetch_played_datas()
+    </script>
+
+
+</body>
+</html>

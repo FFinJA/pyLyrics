@@ -1,0 +1,62 @@
+# Python 缓存文件
+__pycache__/
+*.py[cod]
+*.pyo
+
+# 虚拟环境文件夹
+venv/
+env/
+
+# 配置文件和敏感信息
+*.env
+*.ini
+*.cfg
+secrets.json
+config.yaml
+
+# IDE 和编辑器文件
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# 本地调试和运行日志
+*.log
+*.pid
+*.sqlite3
+
+# 操作系统生成的文件
+.DS_Store
+Thumbs.db
+
+# 编译生成文件
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Docker 文件
+*.tar
+.env.docker
+
+# 测试覆盖率文件
+htmlcov/
+.coverage
+.cache
+
+# Git 临时文件
+*.orig
+
+# FastAPI 静态资源文件
+staticfiles/
+mediafiles/
+
+# Pytest 缓存
+.pytest_cache/
+
+# Jupyter Notebook 检查点
+.ipynb_checkpoints/
+
+# lyrics files
+.md

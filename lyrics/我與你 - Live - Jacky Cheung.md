@@ -1,0 +1,11 @@
+<h3>Lyric of 我與你 :</h3><p>﻿<br>[id:$00000000]
+<br>[ar:张学友]
+<br>[ti:这个冬天不太冷]
+<br>[by:]
+<br>[hash:40ad5e48decec91442c90e383f46d772]
+<br>[al:]
+<br>[sign:]
+<br>[qq:]
+<br>[total:317534]
+<br>[offset:0]
+</p>
